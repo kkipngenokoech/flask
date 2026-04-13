@@ -188,6 +188,8 @@ class Blueprint(Scaffold):
             template_folder=template_folder,
             root_path=root_path,
         )
+        if "." in name:
+            raise ValueError("Blueprint names should not contain dots")
         self.name = name
         self.url_prefix = url_prefix
         self.subdomain = subdomain
