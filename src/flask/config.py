@@ -234,6 +234,7 @@ class Config(dict):
         filename: str,
         load: t.Callable[[t.IO[t.Any]], t.Mapping],
         silent: bool = False,
+        mode: str = "r",
     ) -> bool:
         """Update the values in the config from a file that is loaded
         using the ``load`` parameter. The loaded data is passed to the
@@ -247,6 +248,10 @@ class Config(dict):
             import toml
             app.config.from_file("config.toml", load=toml.load)
 
+            # For binary mode (e.g., tomllib)
+            import tomllib
+            app.config.from_file("config.toml", load=tomllib.load, mode="rb")
+
         :param filename: The path to the data file. This can be an
             absolute path or relative to the config root path.
         :param load: A callable that takes a file handle and returns a
@@ -254,14 +259,18 @@ class Config(dict):
         :type load: ``Callable[[Reader], Mapping]`` where ``Reader``
             implements a ``read`` method.
         :param silent: Ignore the file if it doesn't exist.
+        :param mode: The file mode to use when opening the file. Defaults
+            to ``"r"`` for text mode. Use ``"rb"`` for binary mode.
         :return: ``True`` if the file was loaded successfully.
 
         .. versionadded:: 2.0
+        .. versionchanged:: 2.3
+            Added the ``mode`` parameter.
         """
         filename = os.path.join(self.root_path, filename)
 
         try:
-            with open(filename) as f:
+            with open(filename, mode=mode) as f:
                 obj = load(f)
         except OSError as e:
             if silent and e.errno in (errno.ENOENT, errno.EISDIR):
