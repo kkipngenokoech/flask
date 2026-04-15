@@ -23,7 +23,7 @@ in templates, but there are still other places where you have to be
 careful:
 
 -   generating HTML without the help of Jinja2
--   calling :class:`~flask.Markup` on data submitted by users
+-   calling :class:`~markupsafe.Markup` on data submitted by users
 -   sending out HTML from uploaded files, never do that, use the
     ``Content-Disposition: attachment`` header to prevent that problem.
 -   sending out textfiles from uploaded files.  Some browsers are using
@@ -172,18 +172,6 @@ invisibly to clicks on your page's elements. This is also known as
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
 
 - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
-
-X-XSS-Protection
-~~~~~~~~~~~~~~~~
-
-The browser will try to prevent reflected XSS attacks by not loading the page
-if the request contains something that looks like JavaScript and the response
-contains the same data. ::
-
-    response.headers['X-XSS-Protection'] = '1; mode=block'
-
-- https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
-
 
 .. _security-cookie:
 

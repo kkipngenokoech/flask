@@ -1,5 +1,3 @@
-import functools
-
 import pytest
 from jinja2 import TemplateNotFound
 from werkzeug.http import parse_cache_control_header
@@ -142,7 +140,7 @@ def test_blueprint_url_defaults(app, client):
         return str(bar)
 
     app.register_blueprint(bp, url_prefix="/1", url_defaults={"bar": 23})
-    app.register_blueprint(bp, url_prefix="/2", url_defaults={"bar": 19})
+    app.register_blueprint(bp, name="test2", url_prefix="/2", url_defaults={"bar": 19})
 
     assert client.get("/1/foo").data == b"23/42"
     assert client.get("/2/foo").data == b"19/42"
@@ -253,28 +251,9 @@ def test_templates_list(test_apps):
     assert templates == ["admin/index.html", "frontend/index.html"]
 
 
-def test_dotted_names(app, client):
-    frontend = flask.Blueprint("myapp.frontend", __name__)
-    backend = flask.Blueprint("myapp.backend", __name__)
-
-    @frontend.route("/fe")
-    def frontend_index():
-        return flask.url_for("myapp.backend.backend_index")
-
-    @frontend.route("/fe2")
-    def frontend_page2():
-        return flask.url_for(".frontend_index")
-
-    @backend.route("/be")
-    def backend_index():
-        return flask.url_for("myapp.frontend.frontend_index")
-
-    app.register_blueprint(frontend)
-    app.register_blueprint(backend)
-
-    assert client.get("/fe").data.strip() == b"/be"
-    assert client.get("/fe2").data.strip() == b"/fe"
-    assert client.get("/be").data.strip() == b"/fe"
+def test_dotted_name_not_allowed(app, client):
+    with pytest.raises(ValueError):
+        flask.Blueprint("app.ui", __name__)
 
 
 def test_dotted_names_from_app(app, client):
@@ -343,62 +322,19 @@ def test_route_decorator_custom_endpoint(app, client):
 def test_route_decorator_custom_endpoint_with_dots(app, client):
     bp = flask.Blueprint("bp", __name__)
 
-    @bp.route("/foo")
-    def foo():
-        return flask.request.endpoint
+    with pytest.raises(ValueError):
+        bp.route("/", endpoint="a.b")(lambda: "")
 
-    try:
+    with pytest.raises(ValueError):
+        bp.add_url_rule("/", endpoint="a.b")
 
-        @bp.route("/bar", endpoint="bar.bar")
-        def foo_bar():
-            return flask.request.endpoint
+    def view():
+        return ""
 
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError("expected AssertionError not raised")
+    view.__name__ = "a.b"
 
-    try:
-
-        @bp.route("/bar/123", endpoint="bar.123")
-        def foo_bar_foo():
-            return flask.request.endpoint
-
-    except AssertionError:
-        pass
-    else:
-        raise AssertionError("expected AssertionError not raised")
-
-    def foo_foo_foo():
-        pass
-
-    pytest.raises(
-        AssertionError,
-        lambda: bp.add_url_rule("/bar/123", endpoint="bar.123", view_func=foo_foo_foo),
-    )
-
-    pytest.raises(
-        AssertionError, bp.route("/bar/123", endpoint="bar.123"), lambda: None
-    )
-
-    foo_foo_foo.__name__ = "bar.123"
-
-    pytest.raises(
-        AssertionError, lambda: bp.add_url_rule("/bar/123", view_func=foo_foo_foo)
-    )
-
-    bp.add_url_rule(
-        "/bar/456", endpoint="foofoofoo", view_func=functools.partial(foo_foo_foo)
-    )
-
-    app.register_blueprint(bp, url_prefix="/py")
-
-    assert client.get("/py/foo").data == b"bp.foo"
-    # The rule's didn't actually made it through
-    rv = client.get("/py/bar")
-    assert rv.status_code == 404
-    rv = client.get("/py/bar/123")
-    assert rv.status_code == 404
+    with pytest.raises(ValueError):
+        bp.add_url_rule("/", view_func=view)
 
 
 def test_endpoint_decorator(app, client):
@@ -786,10 +722,6 @@ def test_app_request_processing(app, client):
     bp = flask.Blueprint("bp", __name__)
     evts = []
 
-    @bp.before_app_first_request
-    def before_first_request():
-        evts.append("first")
-
     @bp.before_app_request
     def before_app():
         evts.append("before")
@@ -817,12 +749,12 @@ def test_app_request_processing(app, client):
     # first request
     resp = client.get("/").data
     assert resp == b"request|after"
-    assert evts == ["first", "before", "after", "teardown"]
+    assert evts == ["before", "after", "teardown"]
 
     # second request
     resp = client.get("/").data
     assert resp == b"request|after"
-    assert evts == ["first"] + ["before", "after", "teardown"] * 2
+    assert evts == ["before", "after", "teardown"] * 2
 
 
 def test_app_url_processors(app, client):
@@ -899,3 +831,218 @@ def test_nested_blueprint(app, client):
     assert client.get("/parent/no").data == b"Parent no"
     assert client.get("/parent/child/no").data == b"Parent no"
     assert client.get("/parent/child/grandchild/no").data == b"Grandchild no"
+
+
+def test_nested_callback_order(app, client):
+    parent = flask.Blueprint("parent", __name__)
+    child = flask.Blueprint("child", __name__)
+
+    @app.before_request
+    def app_before1():
+        flask.g.setdefault("seen", []).append("app_1")
+
+    @app.teardown_request
+    def app_teardown1(e=None):
+        assert flask.g.seen.pop() == "app_1"
+
+    @app.before_request
+    def app_before2():
+        flask.g.setdefault("seen", []).append("app_2")
+
+    @app.teardown_request
+    def app_teardown2(e=None):
+        assert flask.g.seen.pop() == "app_2"
+
+    @app.context_processor
+    def app_ctx():
+        return dict(key="app")
+
+    @parent.before_request
+    def parent_before1():
+        flask.g.setdefault("seen", []).append("parent_1")
+
+    @parent.teardown_request
+    def parent_teardown1(e=None):
+        assert flask.g.seen.pop() == "parent_1"
+
+    @parent.before_request
+    def parent_before2():
+        flask.g.setdefault("seen", []).append("parent_2")
+
+    @parent.teardown_request
+    def parent_teardown2(e=None):
+        assert flask.g.seen.pop() == "parent_2"
+
+    @parent.context_processor
+    def parent_ctx():
+        return dict(key="parent")
+
+    @child.before_request
+    def child_before1():
+        flask.g.setdefault("seen", []).append("child_1")
+
+    @child.teardown_request
+    def child_teardown1(e=None):
+        assert flask.g.seen.pop() == "child_1"
+
+    @child.before_request
+    def child_before2():
+        flask.g.setdefault("seen", []).append("child_2")
+
+    @child.teardown_request
+    def child_teardown2(e=None):
+        assert flask.g.seen.pop() == "child_2"
+
+    @child.context_processor
+    def child_ctx():
+        return dict(key="child")
+
+    @child.route("/a")
+    def a():
+        return ", ".join(flask.g.seen)
+
+    @child.route("/b")
+    def b():
+        return flask.render_template_string("{{ key }}")
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent)
+    assert (
+        client.get("/a").data == b"app_1, app_2, parent_1, parent_2, child_1, child_2"
+    )
+    assert client.get("/b").data == b"child"
+
+
+@pytest.mark.parametrize(
+    "parent_init, child_init, parent_registration, child_registration",
+    [
+        ("/parent", "/child", None, None),
+        ("/parent", None, None, "/child"),
+        (None, None, "/parent", "/child"),
+        ("/other", "/something", "/parent", "/child"),
+    ],
+)
+def test_nesting_url_prefixes(
+    parent_init,
+    child_init,
+    parent_registration,
+    child_registration,
+    app,
+    client,
+) -> None:
+    parent = flask.Blueprint("parent", __name__, url_prefix=parent_init)
+    child = flask.Blueprint("child", __name__, url_prefix=child_init)
+
+    @child.route("/")
+    def index():
+        return "index"
+
+    parent.register_blueprint(child, url_prefix=child_registration)
+    app.register_blueprint(parent, url_prefix=parent_registration)
+
+    response = client.get("/parent/child/")
+    assert response.status_code == 200
+
+
+def test_nesting_subdomains(app, client) -> None:
+    subdomain = "api"
+    parent = flask.Blueprint("parent", __name__)
+    child = flask.Blueprint("child", __name__)
+
+    @child.route("/child/")
+    def index():
+        return "child"
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent, subdomain=subdomain)
+
+    client.allow_subdomain_redirects = True
+
+    domain_name = "domain.tld"
+    app.config["SERVER_NAME"] = domain_name
+    response = client.get("/child/", base_url="http://api." + domain_name)
+
+    assert response.status_code == 200
+
+
+def test_child_and_parent_subdomain(app, client) -> None:
+    child_subdomain = "api"
+    parent_subdomain = "parent"
+    parent = flask.Blueprint("parent", __name__)
+    child = flask.Blueprint("child", __name__, subdomain=child_subdomain)
+
+    @child.route("/")
+    def index():
+        return "child"
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent, subdomain=parent_subdomain)
+
+    client.allow_subdomain_redirects = True
+
+    domain_name = "domain.tld"
+    app.config["SERVER_NAME"] = domain_name
+    response = client.get(
+        "/", base_url=f"http://{child_subdomain}.{parent_subdomain}.{domain_name}"
+    )
+
+    assert response.status_code == 200
+
+    response = client.get("/", base_url=f"http://{parent_subdomain}.{domain_name}")
+
+    assert response.status_code == 404
+
+
+def test_unique_blueprint_names(app, client) -> None:
+    bp = flask.Blueprint("bp", __name__)
+    bp2 = flask.Blueprint("bp", __name__)
+
+    app.register_blueprint(bp)
+
+    with pytest.raises(ValueError):
+        app.register_blueprint(bp)  # same bp, same name, error
+
+    app.register_blueprint(bp, name="again")  # same bp, different name, ok
+
+    with pytest.raises(ValueError):
+        app.register_blueprint(bp2)  # different bp, same name, error
+
+    app.register_blueprint(bp2, name="alt")  # different bp, different name, ok
+
+
+def test_self_registration(app, client) -> None:
+    bp = flask.Blueprint("bp", __name__)
+    with pytest.raises(ValueError):
+        bp.register_blueprint(bp)
+
+
+def test_blueprint_renaming(app, client) -> None:
+    bp = flask.Blueprint("bp", __name__)
+    bp2 = flask.Blueprint("bp2", __name__)
+
+    @bp.get("/")
+    def index():
+        return flask.request.endpoint
+
+    @bp.get("/error")
+    def error():
+        flask.abort(403)
+
+    @bp.errorhandler(403)
+    def forbidden(_: Exception):
+        return "Error", 403
+
+    @bp2.get("/")
+    def index2():
+        return flask.request.endpoint
+
+    bp.register_blueprint(bp2, url_prefix="/a", name="sub")
+    app.register_blueprint(bp, url_prefix="/a")
+    app.register_blueprint(bp, url_prefix="/b", name="alt")
+
+    assert client.get("/a/").data == b"bp.index"
+    assert client.get("/b/").data == b"alt.index"
+    assert client.get("/a/a/").data == b"bp.sub.index2"
+    assert client.get("/b/a/").data == b"alt.sub.index2"
+    assert client.get("/a/error").data == b"Error"
+    assert client.get("/b/error").data == b"Error"

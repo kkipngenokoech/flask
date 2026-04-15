@@ -12,14 +12,15 @@ to address bugs and feature requests in Flask itself. Use one of the
 following resources for questions about using Flask or issues with your
 own code:
 
--   The ``#get-help`` channel on our Discord chat:
+-   The ``#questions`` channel on our Discord chat:
     https://discord.gg/pallets
--   The mailing list flask@python.org for long term discussion or larger
-    issues.
 -   Ask on `Stack Overflow`_. Search with Google first using:
     ``site:stackoverflow.com flask {search term, exception message, etc.}``
+-   Ask on our `GitHub Discussions`_ for long term discussion or larger
+    questions.
 
 .. _Stack Overflow: https://stackoverflow.com/questions/tagged/flask?tab=Frequent
+.. _GitHub Discussions: https://github.com/pallets/flask/discussions
 
 
 Reporting issues
@@ -92,25 +93,30 @@ First time setup
 
     .. code-block:: text
 
-        git remote add fork https://github.com/{username}/flask
+        $ git remote add fork https://github.com/{username}/flask
 
 -   Create a virtualenv.
 
-    .. tabs::
 
-       .. group-tab:: Linux/macOS
+    - Linux/macOS
 
-          .. code-block:: text
+      .. code-block:: text
 
-             $ python3 -m venv env
-             $ . env/bin/activate
+         $ python3 -m venv .venv
+         $ . .venv/bin/activate
 
-       .. group-tab:: Windows
+    - Windows
 
-          .. code-block:: text
+      .. code-block:: text
 
-             > py -3 -m venv env
-             > env\Scripts\activate
+         > py -3 -m venv .venv
+         > env\Scripts\activate
+
+-   Upgrade pip and setuptools.
+
+    .. code-block:: text
+
+        $ python -m pip install --upgrade pip setuptools
 
 -   Install the development dependencies, then install Flask in editable
     mode.
@@ -165,7 +171,7 @@ Start coding
 
         $ git push --set-upstream fork your-branch-name
 
-.. _committing as you go: https://dont-be-afraid-to-commit.readthedocs.io/en/latest/git/commandlinegit.html#commit-your-changes
+.. _committing as you go: https://afraid-to-commit.readthedocs.io/en/latest/git/commandlinegit.html#commit-your-changes
 .. _create a pull request: https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request
 
 

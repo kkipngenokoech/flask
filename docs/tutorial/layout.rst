@@ -41,7 +41,7 @@ The project directory will contain:
 * ``flaskr/``, a Python package containing your application code and
   files.
 * ``tests/``, a directory containing test modules.
-* ``venv/``, a Python virtual environment where Flask and other
+* ``.venv/``, a Python virtual environment where Flask and other
   dependencies are installed.
 * Installation files telling Python how to install your project.
 * Version control config, such as `git`_. You should make a habit of
@@ -57,31 +57,31 @@ By the end, your project layout will look like this:
 
     /home/user/Projects/flask-tutorial
     ├── flaskr/
-    │   ├── __init__.py
-    │   ├── db.py
-    │   ├── schema.sql
-    │   ├── auth.py
-    │   ├── blog.py
-    │   ├── templates/
-    │   │   ├── base.html
-    │   │   ├── auth/
-    │   │   │   ├── login.html
-    │   │   │   └── register.html
-    │   │   └── blog/
-    │   │       ├── create.html
-    │   │       ├── index.html
-    │   │       └── update.html
-    │   └── static/
-    │       └── style.css
+    │   ├── __init__.py
+    │   ├── db.py
+    │   ├── schema.sql
+    │   ├── auth.py
+    │   ├── blog.py
+    │   ├── templates/
+    │   │   ├── base.html
+    │   │   ├── auth/
+    │   │   │   ├── login.html
+    │   │   │   └── register.html
+    │   │   └── blog/
+    │   │       ├── create.html
+    │   │       ├── index.html
+    │   │       └── update.html
+    │   └── static/
+    │       └── style.css
     ├── tests/
-    │   ├── conftest.py
-    │   ├── data.sql
-    │   ├── test_factory.py
-    │   ├── test_db.py
-    │   ├── test_auth.py
-    │   └── test_blog.py
-    ├── venv/
-    ├── setup.py
+    │   ├── conftest.py
+    │   ├── data.sql
+    │   ├── test_factory.py
+    │   ├── test_db.py
+    │   ├── test_auth.py
+    │   └── test_blog.py
+    ├── .venv/
+    ├── pyproject.toml
     └── MANIFEST.in
 
 If you're using version control, the following files that are generated
@@ -92,7 +92,7 @@ write. For example, with git:
 .. code-block:: none
     :caption: ``.gitignore``
 
-    venv/
+    .venv/
 
     *.pyc
     __pycache__/

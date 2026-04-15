@@ -1,0 +1,13 @@
+[database]
+host = "localhost"
+port = 5432
+name = "test_db"
+
+[app]
+DEBUG = true
+SECRET_KEY = "test-secret-key"
+TESTING = true
+
+[features]
+ENABLE_FEATURE_X = false
+MAX_CONNECTIONS = 100
