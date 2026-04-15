@@ -39,47 +39,22 @@ during a request. This debugger should only be used during development.
     security risk. Do not run the development server or debugger in a
     production environment.
 
-To enable the debugger, run the development server with the
-``FLASK_ENV`` environment variable set to ``development``. This puts
-Flask in debug mode, which changes how it handles some errors, and
-enables the debugger and reloader.
+The debugger is enabled by default when the development server is run in debug mode.
 
-.. tabs::
+.. code-block:: text
 
-   .. group-tab:: Bash
+    $ flask --app hello run --debug
 
-      .. code-block:: text
-
-         $ export FLASK_ENV=development
-         $ flask run
-
-   .. group-tab:: CMD
-
-      .. code-block:: text
-
-         > set FLASK_ENV=development
-         > flask run
-
-   .. group-tab:: Powershell
-
-      .. code-block:: text
-
-         > $env:FLASK_ENV = "development"
-         > flask run
-
-``FLASK_ENV`` can only be set as an environment variable. When running
-from Python code, passing ``debug=True`` enables debug mode, which is
-mostly equivalent. Debug mode can be controled separately from
-``FLASK_ENV`` with the ``FLASK_DEBUG`` environment variable as well.
+When running from Python code, passing ``debug=True`` enables debug mode, which is
+mostly equivalent.
 
 .. code-block:: python
 
     app.run(debug=True)
 
-:doc:`/server` and :doc:`/cli` have more information about running the
-debugger, debug mode, and development mode. More information about the
-debugger can be found in the `Werkzeug documentation
-<https://werkzeug.palletsprojects.com/debug/>`__.
+:doc:`/server` and :doc:`/cli` have more information about running the debugger and
+debug mode. More information about the debugger can be found in the `Werkzeug
+documentation <https://werkzeug.palletsprojects.com/debug/>`__.
 
 
 External Debuggers
@@ -95,30 +70,9 @@ When using an external debugger, the app should still be in debug mode,
 but it can be useful to disable the built-in debugger and reloader,
 which can interfere.
 
-When running from the command line:
+.. code-block:: text
 
-.. tabs::
-
-   .. group-tab:: Bash
-
-      .. code-block:: text
-
-         $ export FLASK_ENV=development
-         $ flask run --no-debugger --no-reload
-
-   .. group-tab:: CMD
-
-      .. code-block:: text
-
-         > set FLASK_ENV=development
-         > flask run --no-debugger --no-reload
-
-   .. group-tab:: Powershell
-
-      .. code-block:: text
-
-         > $env:FLASK_ENV = "development"
-         > flask run --no-debugger --no-reload
+    $ flask --app hello run --debug --no-debugger --no-reload
 
 When running from Python:
 

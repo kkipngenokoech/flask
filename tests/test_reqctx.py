@@ -1,6 +1,9 @@
+import warnings
+
 import pytest
 
 import flask
+from flask.globals import request_ctx
 from flask.sessions import SecureCookieSessionInterface
 from flask.sessions import SessionInterface
 
@@ -81,7 +84,10 @@ def test_proper_test_request_context(app):
         )
 
     # suppress Werkzeug 0.15 warning about name mismatch
-    with pytest.warns(None):
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", "Current server name", UserWarning, "flask.app"
+        )
         with app.test_request_context(
             "/", environ_overrides={"HTTP_HOST": "localhost"}
         ):
@@ -111,7 +117,7 @@ def test_context_binding(app):
         assert index() == "Hello World!"
     with app.test_request_context("/meh"):
         assert meh() == "http://localhost/meh"
-    assert flask._request_ctx_stack.top is None
+    assert not flask.request
 
 
 def test_context_test(app):
@@ -147,7 +153,7 @@ class TestGreenletContextCopying:
         @app.route("/")
         def index():
             flask.session["fizz"] = "buzz"
-            reqctx = flask._request_ctx_stack.top.copy()
+            reqctx = request_ctx.copy()
 
             def g():
                 assert not flask.request
@@ -221,7 +227,6 @@ def test_session_error_pops_context():
 
 
 def test_session_dynamic_cookie_name():
-
     # This session interface will use a cookie with a different name if the
     # requested url ends with the string "dynamic_cookie"
     class PathAwareSessionInterface(SecureCookieSessionInterface):

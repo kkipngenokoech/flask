@@ -29,7 +29,7 @@ intersphinx_mapping = {
     "itsdangerous": ("https://itsdangerous.palletsprojects.com/", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/", None),
     "wtforms": ("https://wtforms.readthedocs.io/", None),
-    "blinker": ("https://pythonhosted.org/blinker/", None),
+    "blinker": ("https://blinker.readthedocs.io/", None),
 }
 issues_github_path = "pallets/flask"
 
@@ -49,10 +49,10 @@ html_context = {
     ]
 }
 html_sidebars = {
-    "index": ["project.html", "localtoc.html", "searchbox.html"],
-    "**": ["localtoc.html", "relations.html", "searchbox.html"],
+    "index": ["project.html", "localtoc.html", "searchbox.html", "ethicalads.html"],
+    "**": ["localtoc.html", "relations.html", "searchbox.html", "ethicalads.html"],
 }
-singlehtml_sidebars = {"index": ["project.html", "localtoc.html"]}
+singlehtml_sidebars = {"index": ["project.html", "localtoc.html", "ethicalads.html"]}
 html_static_path = ["_static"]
 html_favicon = "_static/flask-icon.png"
 html_logo = "_static/flask-icon.png"
