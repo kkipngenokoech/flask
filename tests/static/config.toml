@@ -1,0 +1,10 @@
+# Test TOML configuration file
+[database]
+host = "localhost"
+port = 5432
+name = "test_db"
+
+[app]
+DEBUG = true
+SECRET_KEY = "test-secret-key"
+TESTING = true
