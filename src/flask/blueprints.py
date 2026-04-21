@@ -182,6 +182,9 @@ class Blueprint(Scaffold):
         root_path: t.Optional[str] = None,
         cli_group: t.Optional[str] = _sentinel,  # type: ignore
     ):
+        if "." in name:
+            raise ValueError("Blueprint names should not contain dots")
+        
         super().__init__(
             import_name=import_name,
             static_folder=static_folder,
